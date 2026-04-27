@@ -9,16 +9,16 @@
 
 ## 1. Настройка Docker network
 
-Aqsha и NPM должны быть в общей внешней сети:
+Aqsha и NPM должны быть в общей внешней сети с именем `public`:
 
 ```bash
-docker network create npm-network
+docker network create public
 ```
 
 Затем подключите контейнер NPM к этой сети (один раз):
 
 ```bash
-docker network connect npm-network <название_NPM_контейнера>
+docker network connect public <название_NPM_контейнера>
 ```
 
 (Чтобы узнать название: `docker ps | grep nginx-proxy-manager`)
@@ -84,6 +84,8 @@ docker compose run --rm api npx prisma migrate deploy
 | Scheme | `http` |
 | Forward Hostname / IP | `aqsha-web` |
 | Forward Port | `80` |
+
+> ⚠️ NPM должен быть в той же Docker network (`public`), что и `aqsha-web`, иначе по hostname `aqsha-web` он его не найдёт.
 | Block Common Exploits | ✅ |
 | Websockets Support | ✅ |
 

@@ -1,6 +1,6 @@
 # Продакшн: разворачивается в /opt/aqsha-finance/
 # Все сервисы внутри Docker network. Web дополнительно подключён к external
-# сети npm-network — через неё Nginx Proxy Manager проксирует запросы.
+# сети public — через неё Nginx Proxy Manager проксирует запросы.
 # Порты НЕ пробрасываются на хост.
 
 services:
@@ -60,14 +60,14 @@ services:
     restart: unless-stopped
     networks:
       - internal
-      - npm-network
+      - public
     depends_on:
       - api
 
 networks:
   internal:
     driver: bridge
-  npm-network:
+  public:
     external: true
 
 volumes:

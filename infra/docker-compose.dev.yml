@@ -1,0 +1,31 @@
+# Локальная разработка: только зависимости.
+# Frontend и backend запускаются на хосте через `pnpm dev`.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: aqsha-postgres-dev
+    environment:
+      POSTGRES_USER: aqsha
+      POSTGRES_PASSWORD: aqsha
+      POSTGRES_DB: aqsha
+    ports:
+      - "5432:5432"
+    volumes:
+      - aqsha-pg-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aqsha"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: aqsha-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - aqsha-redis-dev:/data
+
+volumes:
+  aqsha-pg-dev:
+  aqsha-redis-dev:

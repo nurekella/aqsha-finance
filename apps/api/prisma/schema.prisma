@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+model User {
+  id                 String    @id @default(uuid()) @db.Uuid
+  email              String    @unique
+  passwordHash       String    @map("password_hash")
+  role               UserRole  @default(user)
+  displayName        String?   @map("display_name")
+  locale             String    @default("ru")
+  timezone           String    @default("Asia/Almaty")
+  mustChangePassword Boolean   @default(true) @map("must_change_password")
+  disabledAt         DateTime? @map("disabled_at") @db.Timestamptz
+  lastLoginAt        DateTime? @map("last_login_at") @db.Timestamptz
+  createdById        String?   @map("created_by") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  createdBy    User?  @relation("UserCreator", fields: [createdById], references: [id])
+  createdUsers User[] @relation("UserCreator")
+
+  @@map("users")
+}

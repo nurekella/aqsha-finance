@@ -1,0 +1,75 @@
+# Продакшн: разворачивается в /opt/aqsha-finance/
+# Все сервисы внутри Docker network. Web дополнительно подключён к external
+# сети npm-network — через неё Nginx Proxy Manager проксирует запросы.
+# Порты НЕ пробрасываются на хост.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: aqsha-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - aqsha-pg:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: aqsha-redis
+    restart: unless-stopped
+    volumes:
+      - aqsha-redis:/data
+    networks:
+      - internal
+
+  api:
+    image: ghcr.io/nurekella/aqsha-api:${IMAGE_TAG:-latest}
+    container_name: aqsha-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 30d
+      WEB_ORIGIN: https://${DOMAIN}
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  web:
+    image: ghcr.io/nurekella/aqsha-web:${IMAGE_TAG:-latest}
+    container_name: aqsha-web
+    restart: unless-stopped
+    networks:
+      - internal
+      - npm-network
+    depends_on:
+      - api
+
+networks:
+  internal:
+    driver: bridge
+  npm-network:
+    external: true
+
+volumes:
+  aqsha-pg:
+  aqsha-redis:

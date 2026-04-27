@@ -21,10 +21,20 @@ RUN pnpm build
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Workspace metadata + hoisted root node_modules (pnpm symlinks resolve via these)
+COPY --from=build /app/package.json /app/pnpm-workspace.yaml ./
 COPY --from=build /app/node_modules ./node_modules
+
+# Workspace package referenced by api as @aqsha/shared (symlink target)
+COPY --from=build /app/packages/shared ./packages/shared
+
+# API artifacts
+COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=build /app/apps/api/dist ./dist
-COPY --from=build /app/apps/api/prisma ./prisma
-COPY --from=build /app/apps/api/package.json ./
+COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+COPY --from=build /app/apps/api/package.json ./apps/api/package.json
+
+WORKDIR /app/apps/api
 EXPOSE 3000
 CMD ["node", "dist/main.js"]

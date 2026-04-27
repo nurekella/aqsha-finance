@@ -23,6 +23,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: pnpm --filter @aqsha/api prisma:generate
+
       - run: pnpm typecheck
 
       - run: pnpm test

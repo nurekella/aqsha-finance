@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type { AccessTokenPayload } from './strategies/jwt-access.strategy';
 import type { RefreshTokenPayload } from './strategies/jwt-refresh.strategy';
+import type { JwtDuration } from './jwt-duration';
 
 export interface RequestContext {
   ipAddress?: string | null;
@@ -237,14 +238,14 @@ export class AuthService {
       pwd_change_required: user.mustChangePassword,
     };
     const accessToken = await this.jwt.signAsync(accessPayload, {
-      expiresIn: this.accessTtl,
+      expiresIn: this.accessTtl as JwtDuration,
     });
 
     const jti = randomUUID();
     const refreshPayload: RefreshTokenPayload = { sub: user.id, jti };
     const refreshToken = await this.jwt.signAsync(refreshPayload, {
       secret: this.refreshSecret,
-      expiresIn: this.refreshTtl,
+      expiresIn: this.refreshTtl as JwtDuration,
     });
 
     const decoded = this.jwt.decode<{ exp?: number }>(refreshToken);
